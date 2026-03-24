@@ -1,13 +1,65 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-    <title>AQS Plugin Test</title>
-	<script src="https://raw.githubusercontent.com/CalCoRE/rivulet-next/refs/heads/main/aqs.js"></script>
+    <meta charset="UTF-8">
+    <title>Simple 2x2 CODAP Test</title>
+    <script src="https://concord-consortium.github.io/codap-data-interactive-api/codapInterface.js"></script>
+    <style>
+        body { font-family: sans-serif; padding: 20px; text-align: center; }
+        button { padding: 10px 20px; font-size: 16px; cursor: pointer; }
+        #status { margin-top: 15px; color: green; font-weight: bold; }
+    </style>
 </head>
 <body>
-    <h2>AQS Data Fetcher</h2>
-    <p>Click below to fetch monitors in the test bounding box.</p>
+
+    <h2>CODAP Connection Test</h2>
+    <p>Click the button to generate a 2x2 table of zeros.</p>
     
-    <button onclick="fetchAndLoadMonitors()">Fetch Monitors</button>
+    <button onclick="insertData()">Insert Data into CODAP</button>
+    <div id="status"></div>
+
+    <script>
+        // 2. Initialize the plugin and define the table structure
+        codapInterface.init({
+            name: 'SimpleTestPlugin',
+            title: 'Simple 2x2 Test',
+            version: '1.0',
+            dimensions: { width: 300, height: 250 }
+        }).then(function () {
+            // Tell CODAP to create a new dataset (table)
+            codapInterface.sendRequest({
+                action: 'create',
+                resource: 'dataContext',
+                values: {
+                    name: 'Test_Dataset',
+                    title: '2x2 Zeros Table',
+                    collections: [{
+                        name: 'Test_Data',
+                        attrs: [
+                            { name: 'Column_A', type: 'numeric' },
+                            { name: 'Column_B', type: 'numeric' }
+                        ]
+                    }]
+                }
+            });
+        }).catch(function (error) {
+            document.getElementById('status').innerText = "Failed to connect to CODAP.";
+            document.getElementById('status').style.color = "red";
+        });
+
+        // 3. Function to insert the data when the button is clicked
+        function insertData() {
+            codapInterface.sendRequest({
+                action: 'create',
+                resource: 'dataContext[Test_Dataset].item',
+                values: [
+                    { Column_A: 0, Column_B: 0 },
+                    { Column_A: 0, Column_B: 0 }
+                ]
+            }).then(function () {
+                document.getElementById('status').innerText = "Data inserted successfully!";
+            });
+        }
+    </script>
 </body>
 </html>
