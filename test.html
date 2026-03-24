@@ -2,63 +2,78 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Simple 2x2 CODAP Test</title>
-    <script src="https://concord-consortium.github.io/codap-data-interactive-api/CodapInterface.js"></script>
+    <title>CODAP 2x2 Test</title>
+    <script src="https://concord-consortium.github.io/codap-data-interactive-api/codapInterface.js"></script>
     <style>
         body { font-family: sans-serif; padding: 20px; text-align: center; }
-        button { padding: 10px 20px; font-size: 16px; cursor: pointer; }
-        #status { margin-top: 15px; color: green; font-weight: bold; }
+        button { padding: 10px 20px; font-size: 16px; cursor: pointer; background-color: #007bff; color: white; border: none; border-radius: 4px; }
+        button:hover { background-color: #0056b3; }
+        #status { margin-top: 15px; font-weight: bold; }
     </style>
 </head>
 <body>
 
     <h2>CODAP Connection Test</h2>
-    <p>Click the button to generate a 2x2 table of zeros.</p>
+    <p>Click below to create the table and add zeros.</p>
     
-    <button onclick="insertData()">Insert Data into CODAP</button>
+    <button onclick="buildAndInsert()">Insert 2x2 Data</button>
     <div id="status"></div>
 
     <script>
-        // 2. Initialize the plugin and define the table structure
+        // 1. Just initialize the connection. Nothing else.
         codapInterface.init({
             name: 'SimpleTestPlugin',
             title: 'Simple 2x2 Test',
-            version: '1.0',
+            version: '1.1',
             dimensions: { width: 300, height: 250 }
-        }).then(function () {
-            // Tell CODAP to create a new dataset (table)
-            codapInterface.sendRequest({
-                action: 'create',
-                resource: 'dataContext',
-                values: {
-                    name: 'Test_Dataset',
-                    title: '2x2 Zeros Table',
-                    collections: [{
-                        name: 'Test_Data',
-                        attrs: [
-                            { name: 'Column_A', type: 'numeric' },
-                            { name: 'Column_B', type: 'numeric' }
-                        ]
-                    }]
-                }
-            });
-        }).catch(function (error) {
-            document.getElementById('status').innerText = "Failed to connect to CODAP.";
+        }).catch(function(error) {
+            console.error("Init failed:", error);
+            document.getElementById('status').innerText = "Initialization failed. Check console.";
             document.getElementById('status').style.color = "red";
         });
 
-        // 3. Function to insert the data when the button is clicked
-        function insertData() {
-            codapInterface.sendRequest({
-                action: 'create',
-                resource: 'dataContext[Test_Dataset].item',
-                values: [
-                    { Column_A: 0, Column_B: 0 },
-                    { Column_A: 0, Column_B: 0 }
-                ]
-            }).then(function () {
-                document.getElementById('status').innerText = "Data inserted successfully!";
-            });
+        // 2. Build the table AND insert data only when clicked
+        async function buildAndInsert() {
+            const statusDiv = document.getElementById('status');
+            statusDiv.innerText = "Working...";
+            statusDiv.style.color = "black";
+
+            try {
+                // Step A: Create the Table structure
+                await codapInterface.sendRequest({
+                    action: 'create',
+                    resource: 'dataContext',
+                    values: {
+                        name: 'Test_Dataset',
+                        title: '2x2 Zeros Table',
+                        collections: [{
+                            name: 'Test_Data',
+                            attrs: [
+                                { name: 'Column_A', type: 'numeric' },
+                                { name: 'Column_B', type: 'numeric' }
+                            ]
+                        }]
+                    }
+                });
+
+                // Step B: Insert the items (the zeros)
+                await codapInterface.sendRequest({
+                    action: 'create',
+                    resource: 'dataContext[Test_Dataset].item',
+                    values: [
+                        { Column_A: 0, Column_B: 0 },
+                        { Column_A: 0, Column_B: 0 }
+                    ]
+                });
+
+                statusDiv.innerText = "Success! Data inserted.";
+                statusDiv.style.color = "green";
+
+            } catch (error) {
+                console.error("Data insertion failed:", error);
+                statusDiv.innerText = "Failed! See browser console.";
+                statusDiv.style.color = "red";
+            }
         }
     </script>
 </body>
