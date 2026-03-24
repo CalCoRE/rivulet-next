@@ -2,8 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>CODAP 2x2 Test</title>
-    <script src="https://concord-consortium.github.io/codap-data-interactive-api/codapInterface.js"></script>
+    <title>Modern CODAP 2x2 Test</title>
     <style>
         body { font-family: sans-serif; padding: 20px; text-align: center; }
         button { padding: 10px 20px; font-size: 16px; cursor: pointer; background-color: #007bff; color: white; border: none; border-radius: 4px; }
@@ -13,28 +12,32 @@
 </head>
 <body>
 
-    <h2>CODAP Connection Test</h2>
+    <h2>CODAP Connection Test (Modern API)</h2>
     <p>Click below to create the table and add zeros.</p>
     
-    <button onclick="buildAndInsert()">Insert 2x2 Data</button>
+    <button id="insertBtn">Insert 2x2 Data</button>
     <div id="status"></div>
 
-    <script>
-        // 1. Just initialize the connection. Nothing else.
+    <script type="module">
+        // Import the modern library directly from NPM via a module CDN
+        import codapInterface from 'https://esm.sh/codap-plugin-api';
+
+        const statusDiv = document.getElementById('status');
+
+        // 1. Initialize the connection using the imported module
         codapInterface.init({
             name: 'SimpleTestPlugin',
             title: 'Simple 2x2 Test',
-            version: '1.1',
+            version: '1.2',
             dimensions: { width: 300, height: 250 }
-        }).catch(function(error) {
+        }).catch((error) => {
             console.error("Init failed:", error);
-            document.getElementById('status').innerText = "Initialization failed. Check console.";
-            document.getElementById('status').style.color = "red";
+            statusDiv.innerText = "Initialization failed. Check console.";
+            statusDiv.style.color = "red";
         });
 
-        // 2. Build the table AND insert data only when clicked
-        async function buildAndInsert() {
-            const statusDiv = document.getElementById('status');
+        // 2. Build the table AND insert data when clicked
+        document.getElementById('insertBtn').addEventListener('click', async () => {
             statusDiv.innerText = "Working...";
             statusDiv.style.color = "black";
 
@@ -74,7 +77,7 @@
                 statusDiv.innerText = "Failed! See browser console.";
                 statusDiv.style.color = "red";
             }
-        }
+        });
     </script>
 </body>
 </html>
