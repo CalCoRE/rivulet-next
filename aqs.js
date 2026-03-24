@@ -1,0 +1,82 @@
+// Configuration for the EPA AQS API (Replace with your actual credentials for testing)
+    const AQS_EMAIL = "test@aqs.api"; 
+    const AQS_KEY = "test"; 
+
+    // 1. Initialize the CODAP Connection
+    codapInterface.init({
+        name: 'AQS Data Fetcher',
+        title: 'AQS Air Quality Plugin',
+        version: '1.0',
+        dimensions: { width: 400, height: 500 }
+    }).then(() => {
+        // Once initialized, tell CODAP what our data table should look like
+        setupDataStructure();
+    });
+
+    // 2. Define the Table Structure in CODAP
+    async function setupDataStructure() {
+        await codapInterface.sendRequest({
+            action: 'create',
+            resource: 'dataContext',
+            values: {
+                name: 'AQS_Monitors',
+                title: 'AQS Monitoring Sites',
+                collections: [{
+                    name: 'Monitors',
+                    title: 'Monitoring Stations',
+                    attrs: [
+                        { name: 'Site_Number', type: 'categorical' },
+                        { name: 'State_Code', type: 'categorical' },
+                        { name: 'County_Code', type: 'categorical' },
+                        { name: 'City', type: 'categorical' },
+                        { name: 'Latitude', type: 'numeric' },
+                        { name: 'Longitude', type: 'numeric' }
+                    ]
+                }]
+            }
+        });
+    }
+
+    // 3. Fetch Data from AQS and Send to CODAP
+    async function fetchAndLoadMonitors() {
+        // Hardcoded parameters based on your Jupyter Notebook for this test
+        const minLat = 37, maxLat = 38, minLon = -122.5, maxLon = -121.5;
+        const bdate = "20200410", edate = "20200411";
+        const param = "44201,88101"; // O3 and PM2.5
+
+        // Build the API URL
+        const url = `https://aqs.epa.gov/data/api/monitors/byBox?email=${AQS_EMAIL}&key=${AQS_KEY}&param=${param}&bdate=${bdate}&edate=${edate}&minlat=${minLat}&maxlat=${maxLat}&minlon=${minLon}&maxlon=${maxLon}`;
+
+        try {
+            // Fetch from AQS
+            const response = await fetch(url);
+            const data = await response.json();
+
+            if (data.Header[0].status !== "Success") {
+                console.error("API Error:", data.Header[0].error);
+                return;
+            }
+
+            // Format the data for CODAP
+            const items = data.Data.map(site => ({
+                Site_Number: site.site_number,
+                State_Code: site.state_code,
+                County_Code: site.county_code,
+                City: site.city_name,
+                Latitude: site.latitude,
+                Longitude: site.longitude
+            }));
+
+            // Send the formatted data into the CODAP table
+            await codapInterface.sendRequest({
+                action: 'create',
+                resource: 'dataContext[AQS_Monitors].item',
+                values: items
+            });
+
+            console.log(`Successfully loaded ${items.length} monitors into CODAP.`);
+
+        } catch (error) {
+            console.error("Failed to fetch or load data:", error);
+        }
+    }
